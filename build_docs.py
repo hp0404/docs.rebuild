@@ -37,7 +37,7 @@ def read_questions() -> JSON:
 
 
 def format_question(item: JSON) -> str:
-    return "### > *{question}*\n\n{answer}\n".format(
+    return "> *{question}*\n\n{answer}\n".format(
         question=item["Опишіть, будь ласка, суть пропозиції/звернення"],
         answer=item["Відповідь (текст)"],
     )
@@ -64,7 +64,7 @@ def main() -> int:
         "date", readme_contents, DATE.strftime("%d.%m.%Y %H:%M:%S"), inline=True
     )
     for section, questions in data.items():
-        formatted_questions = "\n".join(
+        formatted_questions = "\n---\n".join(
             format_question(question) for question in questions
         )
         rewritten_readme = update_docs(
