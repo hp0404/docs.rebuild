@@ -19,6 +19,10 @@ TAGS = {
     "відновлення об'єкту": "restoration",
     "date": "date",
 }
+SUGGESTIONS = [
+    "я хочу запропонувати як покращити систему",
+    "у мене щось не працює (технічна проблема)",
+]
 JSON = typing.Dict[str, typing.Any]
 ROOT = Path(__file__).resolve().parent
 SOURCE = ROOT / "docs" / "source"
@@ -28,15 +32,21 @@ DATE = datetime.datetime.now(pytz.timezone("Europe/Kyiv"))
 
 
 def read_questions() -> JSON:
-    df = pd.read_csv(os.environ.get("URL", "https://docs.google.com/spreadsheets/d/16W7PG_1d8uaRYo6zihiGimial9FKgwAhr3mVSXr43ec/export?format=csv"))
+    df = pd.read_csv(os.environ["URL"])
     transformed_data = {}
-    df["type"] = df["тип питання 'змістовна проблема'"].combine_first(df["Я заповнюю форму, тому що"])
+    df["type"] = df["тип питання 'змістовна проблема'"].combine_first(
+        df["Я заповнюю форму, тому що"]
+    )
     sections = df["type"].unique().tolist()
     for section in sections:
-        data = df.loc[
-            df["Відповідь (текст)"].notnull()
-            & df["type"].eq(section)
-        ]
+        if section in SUGGESTIONS:
+            data = df.loc[df["Статус"].eq("в процесі") & df["type"].eq(section)]
+        else:
+            data = df.loc[
+                df["Відповідь (текст)"].notnull()
+                & df["Статус"].eq("виконано")
+                & df["type"].eq(section)
+            ]
         records = data.to_dict(orient="records")
         transformed_data[section] = records
     return transformed_data
