@@ -12,6 +12,11 @@ TAGS = {
     "у мене щось не працює (технічна проблема)": "bugs",
     "я не знаю як внести дані (змістовна проблема)": "questions",
     "я хочу запропонувати як покращити систему": "suggestions",
+    "до якого типу віднести об'єкт": "classification",
+    "немає доступу до об'єкту": "access",
+    "фотобанк": "photos",
+    "параметри руйнувань": "parameters",
+    "відновлення об'єкту": "restoration",
     "date": "date",
 }
 JSON = typing.Dict[str, typing.Any]
@@ -23,13 +28,14 @@ DATE = datetime.datetime.now(pytz.timezone("Europe/Kyiv"))
 
 
 def read_questions() -> JSON:
-    df = pd.read_csv(os.environ["URL"])
+    df = pd.read_csv(os.environ.get("URL", "https://docs.google.com/spreadsheets/d/16W7PG_1d8uaRYo6zihiGimial9FKgwAhr3mVSXr43ec/export?format=csv"))
     transformed_data = {}
-    sections = df["Я заповнюю форму, тому що"].unique().tolist()
+    df["type"] = df["тип питання 'змістовна проблема'"].combine_first(df["Я заповнюю форму, тому що"])
+    sections = df["type"].unique().tolist()
     for section in sections:
         data = df.loc[
             df["Відповідь (текст)"].notnull()
-            & df["Я заповнюю форму, тому що"].eq(section)
+            & df["type"].eq(section)
         ]
         records = data.to_dict(orient="records")
         transformed_data[section] = records
