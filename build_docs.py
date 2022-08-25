@@ -10,10 +10,20 @@ import pandas as pd
 # multi-select values / corresponding tags in the source file
 TAGS = {
     "у мене щось не працює (технічна проблема)": "bugs",
-    "я не знаю як внести дані (змістовна проблема)": "questions",
     "я хочу запропонувати як покращити систему": "suggestions",
+    "до якого типу віднести об'єкт": "classification",
+    "немає доступу до об'єкту": "access",
+    "фотобанк": "photos",
+    "параметри об'єкта": "parameters",
+    "відновлення об'єкту": "restoration",
+    "доступ до Системи": "system",
+    "геодані, адреса об'єкта": "geolocation",
     "date": "date",
 }
+SUGGESTIONS = [
+    "я хочу запропонувати як покращити систему",
+    "у мене щось не працює (технічна проблема)",
+]
 JSON = typing.Dict[str, typing.Any]
 ROOT = Path(__file__).resolve().parent
 SOURCE = ROOT / "docs" / "source"
@@ -25,12 +35,19 @@ DATE = datetime.datetime.now(pytz.timezone("Europe/Kyiv"))
 def read_questions() -> JSON:
     df = pd.read_csv(os.environ["URL"])
     transformed_data = {}
-    sections = df["Я заповнюю форму, тому що"].unique().tolist()
+    df["type"] = df["тип питання 'змістовна проблема'"].combine_first(
+        df["Я заповнюю форму, тому що"]
+    )
+    sections = df["type"].unique().tolist()
     for section in sections:
-        data = df.loc[
-            df["Відповідь (текст)"].notnull()
-            & df["Я заповнюю форму, тому що"].eq(section)
-        ]
+        if section in SUGGESTIONS:
+            data = df.loc[df["Статус"].eq("в процесі") & df["type"].eq(section)]
+        else:
+            data = df.loc[
+                df["Відповідь (текст)"].notnull()
+                & df["Статус"].eq("виконано")
+                & df["type"].eq(section)
+            ]
         records = data.to_dict(orient="records")
         transformed_data[section] = records
     return transformed_data
@@ -38,7 +55,10 @@ def read_questions() -> JSON:
 
 def format_question(item: JSON) -> str:
     return "> *{question}*\n\n{answer}\n".format(
-        question=item["Опишіть, будь ласка, суть пропозиції/звернення"],
+        question=item["Опишіть, будь ласка, суть пропозиції/звернення"]
+        .replace("\n", " ")
+        .replace("*", "")
+        .strip(),
         answer=item["Відповідь (текст)"],
     )
 
