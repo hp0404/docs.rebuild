@@ -10,13 +10,14 @@ import pandas as pd
 # multi-select values / corresponding tags in the source file
 TAGS = {
     "у мене щось не працює (технічна проблема)": "bugs",
-    "я не знаю як внести дані (змістовна проблема)": "questions",
     "я хочу запропонувати як покращити систему": "suggestions",
     "до якого типу віднести об'єкт": "classification",
     "немає доступу до об'єкту": "access",
     "фотобанк": "photos",
-    "параметри руйнувань": "parameters",
+    "параметри об'єкта": "parameters",
     "відновлення об'єкту": "restoration",
+    "доступ до Системи": "system",
+    "геодані, адреса об'єкта": "geolocation",
     "date": "date",
 }
 SUGGESTIONS = [
@@ -54,7 +55,10 @@ def read_questions() -> JSON:
 
 def format_question(item: JSON) -> str:
     return "> *{question}*\n\n{answer}\n".format(
-        question=item["Опишіть, будь ласка, суть пропозиції/звернення"],
+        question=item["Опишіть, будь ласка, суть пропозиції/звернення"]
+        .replace("\n", " ")
+        .replace("*", "")
+        .strip(),
         answer=item["Відповідь (текст)"],
     )
 
