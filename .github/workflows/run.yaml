@@ -3,7 +3,7 @@ name: Update docs
 on: 
   workflow_dispatch:
   schedule:
-    - cron:  '15 21 * * *'
+    - cron:  '45 * * * *'
 
 jobs:
   build:
