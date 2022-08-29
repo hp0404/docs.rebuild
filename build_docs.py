@@ -34,14 +34,18 @@ DATE = datetime.datetime.now(pytz.timezone("Europe/Kyiv"))
 
 def read_questions() -> JSON:
     df = pd.read_csv(os.environ["URL"])
-    transformed_data = {}
+    df = df.loc[df["Позначка часу"].notnull()].copy()
     df["type"] = df["тип питання 'змістовна проблема'"].combine_first(
         df["Я заповнюю форму, тому що"]
     )
     sections = df["type"].unique().tolist()
+    transformed_data = {}
     for section in sections:
         if section in SUGGESTIONS:
             data = df.loc[df["Статус"].eq("в процесі") & df["type"].eq(section)]
+            data["Відповідь (текст)"] = data["Відповідь (текст)"].fillna(
+                "Найближчим часом буде реалізовано"
+            )
         else:
             data = df.loc[
                 df["Відповідь (текст)"].notnull()
