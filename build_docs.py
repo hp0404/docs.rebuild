@@ -24,6 +24,8 @@ SUGGESTIONS = [
     "я хочу запропонувати як покращити систему",
     "у мене щось не працює (технічна проблема)",
 ]
+IGNORE_TAG = "я не знаю як внести дані (змістовна проблема)"
+
 JSON = typing.Dict[str, typing.Any]
 ROOT = Path(__file__).resolve().parent
 SOURCE = ROOT / "docs" / "source"
@@ -39,6 +41,9 @@ def read_questions() -> JSON:
         df["Я заповнюю форму, тому що"]
     )
     sections = df["type"].unique().tolist()
+    if IGNORE_TAG in sections:
+        sections.remove(IGNORE_TAG)
+
     transformed_data = {}
     for section in sections:
         if section in SUGGESTIONS:
