@@ -4,6 +4,7 @@ import json
 import pytz
 import datetime
 import typing
+from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
@@ -21,18 +22,18 @@ class Config(typing.NamedTuple):
     SUGGESTIONS: typing.List[str]
     IGNORE_TAGS: typing.List[str]
 
+    @classmethod
+    def from_json(cls, filepath: Path, *, encoding: str = "utf-8") -> "Config":
+        with filepath.open("r", encoding=encoding) as f:
+            data = json.load(f)
+        return Config(
+            TAGS=data["question_types"],
+            SUGGESTIONS=data["suggestions"],
+            IGNORE_TAGS=data["ignore_tag"],
+        )
 
-def read_config() -> Config:
-    with open(str(ROOT / "config.json"), "r", encoding="utf-8") as f:
-        data = json.load(f)
-    return Config(
-        TAGS=data["question_types"],
-        SUGGESTIONS=data["suggestions"],
-        IGNORE_TAGS=data["ignore_tag"],
-    )
 
-
-config = read_config()
+config = Config.from_json(ROOT / "config.json")
 
 
 def read_questions() -> JSON:
