@@ -36,7 +36,8 @@ DATE = datetime.datetime.now(pytz.timezone("Europe/Kyiv"))
 
 def read_questions() -> JSON:
     df = pd.read_csv(os.environ["URL"])
-    df = df.loc[df["Позначка часу"].notnull()].copy()
+    df["Позначка часу"] = pd.to_datetime(df["Позначка часу"])
+    df = df.loc[df["Позначка часу"].notnull()].sort_values("Позначка часу").copy()
     df["type"] = df["тип питання 'змістовна проблема'"].combine_first(
         df["Я заповнюю форму, тому що"]
     )
