@@ -4,7 +4,6 @@ import json
 import pytz
 import datetime
 import typing
-from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
