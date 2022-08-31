@@ -1,5 +1,6 @@
 import os
 import re
+import json
 import pytz
 import datetime
 import typing
@@ -7,51 +8,54 @@ from pathlib import Path
 
 import pandas as pd
 
-# multi-select values / corresponding tags in the source file
-TAGS = {
-    "у мене щось не працює (технічна проблема)": "bugs",
-    "я хочу запропонувати як покращити систему": "suggestions",
-    "до якого типу віднести об'єкт": "classification",
-    "немає доступу до об'єкту": "access",
-    "фотобанк": "photos",
-    "параметри об'єкта": "parameters",
-    "відновлення об'єкту": "restoration",
-    "доступ до Системи": "system",
-    "геодані, адреса об'єкта": "geolocation",
-    "date": "date",
-}
-SUGGESTIONS = [
-    "я хочу запропонувати як покращити систему",
-    "у мене щось не працює (технічна проблема)",
-]
-IGNORE_TAG = "я не знаю як внести дані (змістовна проблема)"
-
 JSON = typing.Dict[str, typing.Any]
 ROOT = Path(__file__).resolve().parent
 SOURCE = ROOT / "docs" / "source"
 INDEX = SOURCE / "index.md"
 
-DATE = datetime.datetime.now(pytz.timezone("Europe/Kyiv"))
+NOW = datetime.datetime.now(pytz.timezone("Europe/Kyiv"))
+
+
+class Config(typing.NamedTuple):
+    TAGS: typing.Dict[str, str]
+    SUGGESTIONS: typing.List[str]
+    IGNORE_TAGS: typing.List[str]
+
+    @classmethod
+    def from_json(cls, filepath: Path, *, encoding: str = "utf-8") -> "Config":
+        with filepath.open("r", encoding=encoding) as f:
+            data = json.load(f)
+        return Config(
+            TAGS=data["question_types"],
+            SUGGESTIONS=data["suggestions"],
+            IGNORE_TAGS=data["ignore_tag"],
+        )
+
+
+config = Config.from_json(ROOT / "config.json")
 
 
 def read_questions() -> JSON:
     df = pd.read_csv(os.environ["URL"])
     df["Позначка часу"] = pd.to_datetime(df["Позначка часу"])
-    df = df.loc[df["Позначка часу"].notnull()].sort_values("Позначка часу", ascending=False).copy()
+    df = (
+        df.loc[df["Позначка часу"].notnull()]
+        .sort_values("Позначка часу", ascending=False)
+        .copy()
+    )
     df["type"] = df["тип питання 'змістовна проблема'"].combine_first(
         df["Я заповнюю форму, тому що"]
     )
     sections = df["type"].unique().tolist()
-    if IGNORE_TAG in sections:
-        sections.remove(IGNORE_TAG)
+    for tag in config.IGNORE_TAGS:
+        if tag in sections:
+            sections.remove(tag)
 
     transformed_data = {}
     for section in sections:
-        if section in SUGGESTIONS:
-            data = df.loc[df["Статус"].eq("в процесі") & df["type"].eq(section)]
-            data["Відповідь (текст)"] = data["Відповідь (текст)"].fillna(
-                "Найближчим часом буде реалізовано"
-            )
+        if section in config.SUGGESTIONS:
+            data = df.loc[df["Статус"].eq("в процесі") & df["type"].eq(section)].copy()
+            data["Відповідь (текст)"] = data["Відповідь (текст)"].fillna("На розгляді")
         else:
             data = df.loc[
                 df["Відповідь (текст)"].notnull()
@@ -76,7 +80,7 @@ def format_question(item: JSON) -> str:
 def update_docs(
     original_tag: str, readme_content: str, questions: str, inline: bool
 ) -> str:
-    tag = TAGS[original_tag]
+    tag = config.TAGS[original_tag]
     pattern = re.compile(
         rf"<!-- {tag} starts -->.*<!-- {tag} ends -->",
         re.DOTALL,
@@ -91,7 +95,7 @@ def main() -> int:
     data = read_questions()
     readme_contents = INDEX.read_text(encoding="utf-8")
     rewritten_readme = update_docs(
-        "date", readme_contents, DATE.strftime("%d.%m.%Y %H:%M:%S"), inline=True
+        "date", readme_contents, NOW.strftime("%d.%m.%Y %H:%M:%S"), inline=True
     )
     for section, questions in data.items():
         formatted_questions = "\n---\n".join(
