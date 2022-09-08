@@ -9,6 +9,7 @@
         "відновлення об'єкту": "restoration",
         "доступ до Системи": "system",
         "геодані, адреса об'єкта": "geolocation",
+        "оцінка руйнувань": "damage_assessment",
         "date": "date"
     },
     "suggestions": [
