@@ -6,7 +6,7 @@
 * переглянути керівництво з користування системою можна за [посиланням](https://docs.google.com/document/d/18nBsTp8z1VBmNDV_jaTdcn3OFeV2wQJq/edit?usp=sharing&ouid=118382818587314238641&rtpof=true&sd=true);
 * поставити запитання можна через [форму](https://forms.gle/Vd8zJrTydsTgpC6p9).
 
-*Востаннє оновлено: <!-- date starts -->27.10.2022 14:48:07<!-- date ends -->*
+*Востаннє оновлено: <!-- date starts -->27.10.2022 17:16:01<!-- date ends -->*
 
 ---
 
